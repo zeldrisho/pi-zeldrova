@@ -1,0 +1,30 @@
+# Build and test output
+dist/
+coverage/
+*.tsbuildinfo
+*.tgz
+
+# Dependencies and package caches
+node_modules/
+.pnpm-store/
+.pi/npm/
+
+# Logs and environment
+*.log
+.env
+.env.*
+!.env.example
+
+# Vite
+.vite/
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# Editors and operating systems
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
