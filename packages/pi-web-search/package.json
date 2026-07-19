@@ -1,0 +1,61 @@
+{
+  "name": "@zeldrisho/pi-web-search",
+  "version": "0.2.0",
+  "description": "Pi extension for bounded Brave web search and LLM context retrieval",
+  "keywords": [
+    "brave-search",
+    "pi-coding-agent",
+    "pi-extension",
+    "pi-package",
+    "web-search"
+  ],
+  "homepage": "https://github.com/zeldrisho/pi-zeldrova/tree/main/packages/pi-web-search#readme",
+  "bugs": {
+    "url": "https://github.com/zeldrisho/pi-zeldrova/issues"
+  },
+  "license": "MIT",
+  "author": "Zeldris",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zeldrisho/pi-zeldrova.git",
+    "directory": "packages/pi-web-search"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "check": "vp check",
+    "test": "vp test",
+    "test:watch": "vp test --watch",
+    "lint": "vp lint",
+    "lint:fix": "vp lint --fix",
+    "format": "vp fmt --write",
+    "typecheck": "vp check --no-fmt --no-lint"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-ai": "catalog:",
+    "@earendil-works/pi-coding-agent": "catalog:",
+    "typebox": "catalog:",
+    "typescript": "catalog:",
+    "vite-plus": "catalog:"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": "*",
+    "typebox": "*"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "pi": {
+    "extensions": [
+      "./src/index.ts"
+    ]
+  }
+}
