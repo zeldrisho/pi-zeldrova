@@ -1,0 +1,62 @@
+{
+  "name": "@zeldrisho/pi-web-fetch",
+  "version": "0.2.0",
+  "description": "Pi extension for secure, bounded public web page fetching and Markdown extraction",
+  "keywords": [
+    "pi-coding-agent",
+    "pi-extension",
+    "pi-package",
+    "web-fetch"
+  ],
+  "homepage": "https://github.com/zeldrisho/pi-zeldrova/tree/main/packages/pi-web-fetch#readme",
+  "bugs": {
+    "url": "https://github.com/zeldrisho/pi-zeldrova/issues"
+  },
+  "license": "MIT",
+  "author": "Zeldris",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zeldrisho/pi-zeldrova.git",
+    "directory": "packages/pi-web-fetch"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "check": "vp check",
+    "test": "vp test",
+    "test:watch": "vp test --watch",
+    "lint": "vp lint",
+    "lint:fix": "vp lint --fix",
+    "format": "vp fmt --write",
+    "typecheck": "vp check --no-fmt --no-lint"
+  },
+  "dependencies": {
+    "defuddle": "^0.19.1",
+    "linkedom": "^0.18.13"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "catalog:",
+    "typebox": "catalog:",
+    "typescript": "catalog:",
+    "vite-plus": "catalog:"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "typebox": "*"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "pi": {
+    "extensions": [
+      "./src/index.ts"
+    ]
+  }
+}
