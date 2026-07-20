@@ -15,11 +15,11 @@ Packages are versioned independently with Release Please. Conventional commits t
 
 Release automation requires:
 
-- a `RELEASE_PLEASE_TOKEN` repository secret whose fine-grained token can write repository contents, issues, and pull requests, so generated pull requests trigger required checks;
+- the repository `GITHUB_TOKEN`, so release pull requests and commits are owned by `github-actions[bot]` instead of a maintainer account;
 - a protected `publish` GitHub environment; and
 - one npm trusted publisher per package for `zeldrisho/pi-zeldrova`, workflow `release.yml`, environment `publish`, with the `npm publish` action allowed.
 
-The workflow validates each pushed commit before Release Please can create tags or releases, serializes release runs, grants `id-token: write` only to the publish job, and publishes only package paths reported as released by Release Please. Keep workflow actions pinned to full commit SHAs.
+GitHub does not start new workflow runs for pull requests created with `GITHUB_TOKEN`. The release workflow therefore validates each pushed commit before Release Please runs. It also serializes release runs, grants `id-token: write` only to the publish job, and publishes only package paths reported as released by Release Please. Keep workflow actions pinned to full commit SHAs.
 
 ## Release procedure
 
