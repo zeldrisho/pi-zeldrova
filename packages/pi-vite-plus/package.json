@@ -1,6 +1,6 @@
 {
   "name": "@zeldrisho/pi-vite-plus",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Pi extension that guides agents to use Vite+, the unified toolchain for the web",
   "keywords": [
     "package-management",
