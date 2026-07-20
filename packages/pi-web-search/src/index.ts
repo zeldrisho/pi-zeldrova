@@ -6,10 +6,12 @@ import {
   DEFAULT_MAX_BYTES,
   DEFAULT_MAX_LINES,
   formatSize,
+  keyHint,
   truncateHead,
   withFileMutationQueue,
 } from "@earendil-works/pi-coding-agent";
 import { StringEnum } from "@earendil-works/pi-ai";
+import { Text } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 
 const DEFAULT_RESULT_COUNT = 5;
@@ -396,6 +398,14 @@ export default function (pi: ExtensionAPI) {
       ),
     }),
 
+    renderCall(args, theme) {
+      return new Text(
+        `${theme.fg("toolTitle", theme.bold("web_search"))} ${theme.fg("accent", args.query)}`,
+        0,
+        0,
+      );
+    },
+
     async execute(_toolCallId, params, signal, onUpdate) {
       const query = params.query.trim();
       if (!query) throw new Error("Search query cannot be empty.");
@@ -476,6 +486,32 @@ export default function (pi: ExtensionAPI) {
           fullOutputPath,
         } satisfies SearchDetails,
       };
+    },
+
+    renderResult(result, { expanded, isPartial }, theme) {
+      if (isPartial) return new Text(theme.fg("warning", "Searching…"), 0, 0);
+
+      const details = result.details as SearchDetails | undefined;
+      if (!details) return new Text(theme.fg("dim", "No results"), 0, 0);
+
+      if (!expanded) {
+        const count = `${details.resultCount} ${details.resultCount === 1 ? "result" : "results"}`;
+        const flags = [
+          details.mode,
+          details.cached ? "cached" : undefined,
+          details.truncated ? "truncated" : undefined,
+        ]
+          .filter(Boolean)
+          .join(" · ");
+        return new Text(
+          `${theme.fg("success", count)} ${theme.fg("muted", `· ${flags}`)} (${keyHint("app.tools.expand", "to expand")})`,
+          0,
+          0,
+        );
+      }
+
+      const content = result.content.find((item) => item.type === "text");
+      return new Text(content?.type === "text" ? theme.fg("toolOutput", content.text) : "", 0, 0);
     },
   });
 }

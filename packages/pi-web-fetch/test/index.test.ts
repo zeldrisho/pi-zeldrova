@@ -1,8 +1,8 @@
 import { once } from "node:events";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
-import { afterAll, beforeAll, describe, expect, it } from "vite-plus/test";
-import {
+import { afterAll, beforeAll, describe, expect, it, vi } from "vite-plus/test";
+import registerWebFetch, {
   executeWebFetch,
   ExpiringLruCache,
   fetchRemoteContent,
@@ -12,6 +12,25 @@ import {
   type FetchRemoteDependencies,
   type ValidatedTarget,
 } from "../src/index";
+
+vi.mock("@earendil-works/pi-coding-agent", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@earendil-works/pi-coding-agent")>();
+  return { ...actual, keyHint: () => "Ctrl+O to expand" };
+});
+
+interface RenderedComponent {
+  render(width: number): string[];
+}
+
+interface RenderTheme {
+  fg(color: string, text: string): string;
+  bold(text: string): string;
+}
+
+const renderTheme: RenderTheme = {
+  fg: (_color, text) => text,
+  bold: (text) => text,
+};
 
 let versionedContinuationRequests = 0;
 
@@ -122,6 +141,55 @@ describe("ExpiringLruCache", () => {
     expect(cache.get("a")).toBeUndefined();
     expect(cache.size).toBe(0);
     expect(cache.byteSize).toBe(0);
+  });
+});
+
+describe("web_fetch rendering", () => {
+  it("hides fetched content until tool output is expanded", () => {
+    let registered: unknown;
+    registerWebFetch({
+      registerTool(tool: unknown) {
+        registered = tool;
+      },
+    } as unknown as import("@earendil-works/pi-coding-agent").ExtensionAPI);
+
+    const tool = registered as {
+      renderResult(
+        result: {
+          content: Array<{ type: "text"; text: string }>;
+          details: {
+            extractor: "defuddle";
+            cached: boolean;
+            truncated: boolean;
+            characterCount: number;
+          };
+        },
+        options: { expanded: boolean; isPartial: boolean },
+        theme: RenderTheme,
+      ): RenderedComponent;
+    };
+    const result = {
+      content: [{ type: "text" as const, text: "Secret fetched content" }],
+      details: {
+        extractor: "defuddle" as const,
+        cached: false,
+        truncated: false,
+        characterCount: 22,
+      },
+    };
+
+    const collapsed = tool
+      .renderResult(result, { expanded: false, isPartial: false }, renderTheme)
+      .render(200)
+      .join("\n");
+    const expanded = tool
+      .renderResult(result, { expanded: true, isPartial: false }, renderTheme)
+      .render(200)
+      .join("\n");
+
+    expect(collapsed).toContain("22 characters");
+    expect(collapsed).not.toContain("Secret fetched content");
+    expect(expanded).toContain("Secret fetched content");
   });
 });
 
