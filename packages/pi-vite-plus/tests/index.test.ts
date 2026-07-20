@@ -27,6 +27,7 @@ describe("Vite+ guidance", () => {
     expect(result.systemPrompt).toBe(`base prompt\n\n${VITE_PLUS_GUIDANCE}`);
     expect(result.systemPrompt).toContain("a unified web toolchain");
     expect(result.systemPrompt).toContain("Prefer `vp` when available");
+    expect(result.systemPrompt).toContain("`vp migrate` when migrating an existing project");
     expect(result.systemPrompt).toContain("`vp install`, `vp add`, `vp remove`, and `vp update`");
     expect(result.systemPrompt).toContain("built-in commands");
     expect(result.systemPrompt).toContain("`vp run <task>` (or `vpr <task>`)");

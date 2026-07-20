@@ -5,6 +5,7 @@ export const VITE_PLUS_GUIDANCE = `## Vite+
 Vite+ is a unified web toolchain exposed through the \`vp\` CLI.
 
 - Prefer \`vp\` when available. Preserve the project's package-manager metadata and lockfiles; Vite+ detects and delegates to the configured package manager.
+- Use \`vp migrate\` when migrating an existing project to Vite+.
 - Use \`vp install\`, \`vp add\`, \`vp remove\`, and \`vp update\` for dependency workflows.
 - Prefer built-in commands such as \`vp dev\`, \`vp check\`, \`vp test\`, \`vp build\`, and \`vp pack\`. Use \`vp run <task>\` (or \`vpr <task>\`) for configured tasks and package scripts.
 - Use \`vp exec <binary>\` for local binaries, \`vp dlx <package>\` for one-off packages, and \`vp node <script>\` for Node.js scripts.
