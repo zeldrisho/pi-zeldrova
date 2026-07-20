@@ -1,6 +1,6 @@
 # Pi Zeldrova
 
-Monorepo for independently published Pi extensions.
+Monorepo for my personal Pi extensions.
 
 ## Packages
 
@@ -14,10 +14,25 @@ Monorepo for independently published Pi extensions.
 
 Install only the extensions you need using the commands above. See each package README for configuration, behavior, and usage.
 
-## Acknowledgments
+## Manage extensions
 
-This monorepo was inspired by [`gotgenes/pi-packages`](https://github.com/gotgenes/pi-packages).
+Update all installed extensions:
+
+```bash
+pi update --extensions
+```
+
+To update or uninstall one extension, use its npm package name:
+
+```bash
+pi update npm:@zeldrisho/pi-file-search
+pi uninstall npm:@zeldrisho/pi-file-search
+```
+
+## Development
+
+See the [development guide](docs/development.md) for setup, package conventions, and verification commands.
 
 ## License
 
-This project and each package are available under the [MIT license](LICENSE).
+[MIT](LICENSE)
