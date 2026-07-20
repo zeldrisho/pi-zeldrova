@@ -29,7 +29,6 @@
 - Keep npm contents allowlisted with each package's `files` field.
 - Do not publish tests, TypeScript configuration, Vite configuration, or workspace files.
 - Put Pi-provided imports in `peerDependencies` with `"*"` ranges; put other runtime libraries in `dependencies`.
-- Do not publish, push, or alter the legacy repository unless explicitly requested.
 
 ## Git Workflow
 
@@ -41,4 +40,6 @@
 
 - When asked to push changes, push the work branch and create a pull request.
 - Agents must never merge pull requests; leave merging to the user.
-- Do not publish npm packages or create GitHub releases unless explicitly requested.
+- Do not hand-edit Release Please branches or generated release artifacts to force a release through checks.
+- Do not publish npm packages, create tags or GitHub releases, or approve protected-environment deployments unless explicitly requested for the specific package and version.
+- Let Release Please manage versions; keep release metadata synchronized with package manifests and npm.
