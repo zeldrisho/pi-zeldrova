@@ -22,11 +22,11 @@ Update all installed extensions:
 pi update --extensions
 ```
 
-To update or uninstall one extension, use its npm package name:
+To update or remove one extension, use its npm package name:
 
 ```bash
 pi update npm:@zeldrisho/pi-file-search
-pi uninstall npm:@zeldrisho/pi-file-search
+pi remove npm:@zeldrisho/pi-file-search
 ```
 
 ## Development

@@ -55,4 +55,4 @@ The tests use deterministic local fixtures and mocked Brave responses. Manually 
 - `pi-web-fetch`: supported formats, redirects, blocked local/private targets, oversized responses, caching, request coalescing, and offset continuation; and
 - `pi-nested-agent-md`: ancestor ordering, direct reads, deduplication, paths outside the working directory, output bounds, and reinjection after compaction.
 
-To load local packages in an isolated Pi session, use the repository's `.pi/settings.json` and disable globally installed extensions as needed so they cannot interfere with manual verification.
+To load a local package in an isolated Pi session, run `pi -e ./packages/<name>` and disable globally installed extensions as needed so they cannot interfere with manual verification.
