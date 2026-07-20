@@ -134,6 +134,28 @@ describe("nested AGENTS.md discovery", () => {
     await expect(handlers.tool_result(readResult(target), context)).resolves.toBeUndefined();
   });
 
+  it("escapes metacharacters and control characters in context paths", async () => {
+    const root = await createTemporaryDirectory("nested-agents-path-test-");
+    const scope = 'scope"<&\nname';
+    const directory = join(root, scope);
+    const target = join(directory, "file.ts");
+    await mkdir(directory, { recursive: true });
+    await writeFile(join(directory, "AGENTS.md"), "scoped instructions", "utf8");
+    await writeFile(target, "export {};", "utf8");
+
+    const handlers = registerHandlers();
+    const result = (await handlers.tool_result(readResult(target), { cwd: root })) as {
+      content: Array<{ type: string; text: string }>;
+    };
+    const output = result.content.at(-1)?.text ?? "";
+
+    expect(output).toContain(
+      'path="scope&quot;&lt;&amp;�name/AGENTS.md" scope="scope&quot;&lt;&amp;�name"',
+    );
+    expect(output).toContain('files under scope"<&�name/.');
+    expect(output).not.toContain('scope"<&\nname');
+  });
+
   it("bounds injected instruction bytes and lines", async () => {
     const { root, target, innerAgents } = await createTree();
     await writeFile(innerAgents, `${"x".repeat(40_000)}\n${"line\n".repeat(3_000)}`, "utf8");

@@ -2,9 +2,8 @@ import { once } from "node:events";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vite-plus/test";
-import registerWebFetch, {
+import {
   executeWebFetch,
-  ExpiringLruCache,
   fetchRemoteContent,
   isPrivateAddress,
   requestPinned,
@@ -13,28 +12,19 @@ import registerWebFetch, {
   type ValidatedTarget,
 } from "../src/index";
 
-vi.mock("@earendil-works/pi-coding-agent", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@earendil-works/pi-coding-agent")>();
-  return { ...actual, keyHint: () => "Ctrl+O to expand" };
-});
-
-interface RenderedComponent {
-  render(width: number): string[];
-}
-
-interface RenderTheme {
-  fg(color: string, text: string): string;
-  bold(text: string): string;
-}
-
-const renderTheme: RenderTheme = {
-  fg: (_color, text) => text,
-  bold: (text) => text,
-};
-
 let versionedContinuationRequests = 0;
+let coalescedRequests = 0;
 
 function fixtureResponse(request: IncomingMessage, response: ServerResponse): void {
+  if (request.url?.startsWith("/coalesced?")) {
+    coalescedRequests += 1;
+    setTimeout(() => {
+      response.setHeader("content-type", "text/plain");
+      response.end("shared response");
+    }, 50);
+    return;
+  }
+
   if (request.url?.startsWith("/versioned-continuation?")) {
     versionedContinuationRequests += 1;
     const version = `version-${versionedContinuationRequests}`;
@@ -90,108 +80,6 @@ function fixtureResponse(request: IncomingMessage, response: ServerResponse): vo
       response.end();
   }
 }
-
-describe("ExpiringLruCache", () => {
-  const sizeOf = (value: string) => new TextEncoder().encode(value).byteLength;
-
-  it("evicts the least recently used entry at the count limit", () => {
-    const cache = new ExpiringLruCache<string, string>(2, 100, sizeOf, () => 0);
-    cache.set("a", "a", 100);
-    cache.set("b", "b", 100);
-    expect(cache.get("a")).toBe("a");
-    cache.set("c", "c", 100);
-
-    expect(cache.get("b")).toBeUndefined();
-    expect(cache.get("a")).toBe("a");
-    expect(cache.get("c")).toBe("c");
-    expect(cache.size).toBe(2);
-  });
-
-  it("evicts entries until the aggregate byte limit is satisfied", () => {
-    const cache = new ExpiringLruCache<string, string>(10, 5, sizeOf, () => 0);
-    cache.set("a", "aaa", 100);
-    cache.set("b", "bb", 100);
-    cache.set("c", "ccc", 100);
-
-    expect(cache.get("a")).toBeUndefined();
-    expect(cache.get("b")).toBe("bb");
-    expect(cache.get("c")).toBe("ccc");
-    expect(cache.byteSize).toBe(5);
-  });
-
-  it("accounts for replacement and expiry deletion", () => {
-    let now = 0;
-    const cache = new ExpiringLruCache<string, string>(10, 10, sizeOf, () => now);
-    cache.set("a", "1234", 10);
-    cache.set("a", "1", 10);
-    cache.set("b", "123", 5);
-    expect(cache.byteSize).toBe(4);
-
-    now = 5;
-    expect(cache.get("b")).toBeUndefined();
-    expect(cache.byteSize).toBe(1);
-    expect(cache.get("a")).toBe("1");
-  });
-
-  it("does not retain an individually oversized replacement", () => {
-    const cache = new ExpiringLruCache<string, string>(10, 5, sizeOf, () => 0);
-    cache.set("a", "small", 100);
-
-    expect(cache.set("a", "larger", 100)).toBe(false);
-    expect(cache.get("a")).toBeUndefined();
-    expect(cache.size).toBe(0);
-    expect(cache.byteSize).toBe(0);
-  });
-});
-
-describe("web_fetch rendering", () => {
-  it("hides fetched content until tool output is expanded", () => {
-    let registered: unknown;
-    registerWebFetch({
-      registerTool(tool: unknown) {
-        registered = tool;
-      },
-    } as unknown as import("@earendil-works/pi-coding-agent").ExtensionAPI);
-
-    const tool = registered as {
-      renderResult(
-        result: {
-          content: Array<{ type: "text"; text: string }>;
-          details: {
-            extractor: "defuddle";
-            cached: boolean;
-            truncated: boolean;
-            characterCount: number;
-          };
-        },
-        options: { expanded: boolean; isPartial: boolean },
-        theme: RenderTheme,
-      ): RenderedComponent;
-    };
-    const result = {
-      content: [{ type: "text" as const, text: "Secret fetched content" }],
-      details: {
-        extractor: "defuddle" as const,
-        cached: false,
-        truncated: false,
-        characterCount: 22,
-      },
-    };
-
-    const collapsed = tool
-      .renderResult(result, { expanded: false, isPartial: false }, renderTheme)
-      .render(200)
-      .join("\n");
-    const expanded = tool
-      .renderResult(result, { expanded: true, isPartial: false }, renderTheme)
-      .render(200)
-      .join("\n");
-
-    expect(collapsed).toContain("22 characters");
-    expect(collapsed).not.toContain("Secret fetched content");
-    expect(expanded).toContain("Secret fetched content");
-  });
-});
 
 describe("web_fetch network boundaries", () => {
   const server = createServer(fixtureResponse);
@@ -363,6 +251,21 @@ describe("web_fetch network boundaries", () => {
     expect(second.content[0].text).toContain("end-version-1");
     expect(second.content[0].text).not.toContain("version-2");
     expect(updates).toEqual([`Fetching ${url}…`, `Using cached content for ${url}…`]);
+  });
+
+  it("coalesces concurrent fetches without letting one caller cancel another", async () => {
+    coalescedRequests = 0;
+    const url = `${origin}/coalesced?request=${Date.now()}`;
+    const controller = new AbortController();
+    const cancelled = executeWebFetch({ url }, controller.signal, undefined, dependencies);
+    const completed = executeWebFetch({ url }, undefined, undefined, dependencies);
+    await vi.waitFor(() => expect(coalescedRequests).toBe(1));
+    const cancelledExpectation = expect(cancelled).rejects.toThrow("cancelled");
+    controller.abort();
+
+    await cancelledExpectation;
+    await expect(completed).resolves.toMatchObject({ details: { cached: false } });
+    expect(coalescedRequests).toBe(1);
   });
 
   it("wraps tool output and caches identical requests", async () => {

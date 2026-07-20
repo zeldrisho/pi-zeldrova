@@ -161,7 +161,7 @@ describe("web_search", () => {
     expect(result.content[0].text).toContain("untrusted external data");
   });
 
-  it("hides result content until tool output is expanded", async () => {
+  it("shows a Pi-style result preview until tool output is expanded", async () => {
     process.env.BRAVE_SEARCH_API_KEY = "render-secret";
     vi.stubGlobal(
       "fetch",
@@ -169,7 +169,9 @@ describe("web_search", () => {
         jsonResponse({
           web: {
             results: [
-              { title: "Hidden title", url: "https://example.com/hidden", description: "Hidden" },
+              { title: "First title", url: "https://example.com/first", description: "First" },
+              { title: "Second title", url: "https://example.com/second", description: "Second" },
+              { title: "Third title", url: "https://example.com/third", description: "Third" },
             ],
           },
         }),
@@ -178,7 +180,7 @@ describe("web_search", () => {
     const tool = createSearchTool();
     const result = await tool.execute(
       "call",
-      { query: "unique renderer query 721", count: 1 },
+      { query: "unique renderer query 721", count: 3 },
       undefined,
       undefined,
     );
@@ -192,9 +194,11 @@ describe("web_search", () => {
       .render(200)
       .join("\n");
 
-    expect(collapsed).toContain("1 result");
-    expect(collapsed).not.toContain("Hidden title");
-    expect(expanded).toContain("Hidden title");
+    expect(collapsed).toContain("First title");
+    expect(collapsed).toContain("more lines");
+    expect(collapsed).not.toContain("Second title");
+    expect(expanded).toContain("Third title");
+    expect(expanded).not.toContain("more lines");
   });
 
   it("caches identical requests without caching secrets", async () => {
@@ -223,6 +227,39 @@ describe("web_search", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(JSON.stringify(second)).not.toContain("cache-secret");
     expect(updates).toEqual(["Searching the web with brave (web)…", "Using cached brave results…"]);
+  });
+
+  it("coalesces concurrent searches without letting one caller cancel another", async () => {
+    process.env.BRAVE_SEARCH_API_KEY = "coalesce-secret";
+    let resolveResponse: (response: Response) => void = () => {};
+    let sharedSignal: AbortSignal | undefined;
+    const fetchMock = vi.fn(
+      async (_input: string | URL | Request, init?: RequestInit) =>
+        await new Promise<Response>((resolve) => {
+          sharedSignal = init?.signal ?? undefined;
+          resolveResponse = resolve;
+        }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const tool = createSearchTool();
+    const controller = new AbortController();
+    const params = { query: "unique concurrent query 318", count: 1 };
+
+    const cancelled = tool.execute("first", params, controller.signal, undefined);
+    const completed = tool.execute("second", params, undefined, undefined);
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const cancelledExpectation = expect(cancelled).rejects.toThrow("cancelled");
+    controller.abort();
+    resolveResponse(
+      jsonResponse({
+        web: { results: [{ title: "Shared", url: "https://example.com/shared" }] },
+      }),
+    );
+
+    await cancelledExpectation;
+    await expect(completed).resolves.toMatchObject({ details: { resultCount: 1 } });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(sharedSignal?.aborted).toBe(false);
   });
 
   it("escapes forged untrusted-content delimiters in context snippets", async () => {
