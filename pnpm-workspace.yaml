@@ -9,6 +9,7 @@ allowBuilds:
 catalog:
   "@earendil-works/pi-ai": "^0.80.10"
   "@earendil-works/pi-coding-agent": "^0.80.10"
+  "@earendil-works/pi-tui": "^0.80.10"
   "@types/node": "^26.1.1"
   "@vitest/coverage-v8": "4.1.10"
   typebox: "^1.1.24"

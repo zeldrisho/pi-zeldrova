@@ -4,6 +4,11 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import registerWebSearch from "../src/index";
 
+vi.mock("@earendil-works/pi-coding-agent", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@earendil-works/pi-coding-agent")>();
+  return { ...actual, keyHint: () => "Ctrl+O to expand" };
+});
+
 interface SearchParameters {
   query: string;
   count?: number;
@@ -24,6 +29,15 @@ interface SearchExecutionResult {
   };
 }
 
+interface RenderedComponent {
+  render(width: number): string[];
+}
+
+interface RenderTheme {
+  fg(color: string, text: string): string;
+  bold(text: string): string;
+}
+
 interface SearchTool {
   execute(
     toolCallId: string,
@@ -33,6 +47,11 @@ interface SearchTool {
       | ((update: { content: Array<{ type: "text"; text: string }>; details: object }) => void)
       | undefined,
   ): Promise<SearchExecutionResult>;
+  renderResult(
+    result: SearchExecutionResult,
+    options: { expanded: boolean; isPartial: boolean },
+    theme: RenderTheme,
+  ): RenderedComponent;
 }
 
 type ShutdownHandler = () => Promise<void> | void;
@@ -68,6 +87,11 @@ function jsonResponse(value: unknown, status = 200): Response {
     headers: { "content-type": "application/json" },
   });
 }
+
+const renderTheme: RenderTheme = {
+  fg: (_color, text) => text,
+  bold: (text) => text,
+};
 
 const originalApiKey = process.env.BRAVE_SEARCH_API_KEY;
 
@@ -135,6 +159,42 @@ describe("web_search", () => {
       snippet: "A useful snippet",
     });
     expect(result.content[0].text).toContain("untrusted external data");
+  });
+
+  it("hides result content until tool output is expanded", async () => {
+    process.env.BRAVE_SEARCH_API_KEY = "render-secret";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        jsonResponse({
+          web: {
+            results: [
+              { title: "Hidden title", url: "https://example.com/hidden", description: "Hidden" },
+            ],
+          },
+        }),
+      ),
+    );
+    const tool = createSearchTool();
+    const result = await tool.execute(
+      "call",
+      { query: "unique renderer query 721", count: 1 },
+      undefined,
+      undefined,
+    );
+
+    const collapsed = tool
+      .renderResult(result, { expanded: false, isPartial: false }, renderTheme)
+      .render(200)
+      .join("\n");
+    const expanded = tool
+      .renderResult(result, { expanded: true, isPartial: false }, renderTheme)
+      .render(200)
+      .join("\n");
+
+    expect(collapsed).toContain("1 result");
+    expect(collapsed).not.toContain("Hidden title");
+    expect(expanded).toContain("Hidden title");
   });
 
   it("caches identical requests without caching secrets", async () => {

@@ -7,8 +7,10 @@ import {
   DEFAULT_MAX_BYTES,
   DEFAULT_MAX_LINES,
   formatSize,
+  keyHint,
   truncateHead,
 } from "@earendil-works/pi-coding-agent";
+import { Text } from "@earendil-works/pi-tui";
 import { Defuddle } from "defuddle/node";
 import { parseHTML } from "linkedom";
 import { Type } from "typebox";
@@ -494,6 +496,13 @@ interface WebFetchUpdate {
   details: Record<string, never>;
 }
 
+interface WebFetchDetails {
+  extractor: "defuddle" | "basic" | "raw";
+  cached: boolean;
+  truncated: boolean;
+  characterCount: number;
+}
+
 export async function executeWebFetch(
   params: WebFetchParameters,
   signal: AbortSignal | undefined,
@@ -581,8 +590,41 @@ export default function (pi: ExtensionAPI) {
       ),
     }),
 
+    renderCall(args, theme) {
+      return new Text(
+        `${theme.fg("toolTitle", theme.bold("web_fetch"))} ${theme.fg("accent", args.url)}`,
+        0,
+        0,
+      );
+    },
+
     async execute(_toolCallId, params, signal, onUpdate) {
       return executeWebFetch(params, signal, onUpdate);
+    },
+
+    renderResult(result, { expanded, isPartial }, theme) {
+      if (isPartial) return new Text(theme.fg("warning", "Fetching…"), 0, 0);
+
+      const details = result.details as WebFetchDetails | undefined;
+      if (!details) return new Text(theme.fg("dim", "No content"), 0, 0);
+
+      if (!expanded) {
+        const flags = [
+          details.extractor,
+          details.cached ? "cached" : undefined,
+          details.truncated ? "more available" : undefined,
+        ]
+          .filter(Boolean)
+          .join(" · ");
+        return new Text(
+          `${theme.fg("success", `${details.characterCount} characters`)} ${theme.fg("muted", `· ${flags}`)} (${keyHint("app.tools.expand", "to expand")})`,
+          0,
+          0,
+        );
+      }
+
+      const content = result.content.find((item) => item.type === "text");
+      return new Text(content?.type === "text" ? theme.fg("toolOutput", content.text) : "", 0, 0);
     },
   });
 }
