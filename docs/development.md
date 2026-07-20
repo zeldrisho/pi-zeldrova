@@ -47,7 +47,7 @@ vp run pack:dry-run
 vp run test:packages
 ```
 
-Every dry-run tarball must contain only `LICENSE`, `package.json`, `README.md`, and the package's runtime files under `src/`. The packaged smoke test installs each tarball in an isolated fixture and loads it through Pi's extension loader.
+Every dry-run tarball must contain only `CHANGELOG.md`, `LICENSE`, `package.json`, `README.md`, and the package's runtime files under `src/`. The packaged smoke test installs each tarball in an isolated fixture and loads it through Pi's extension loader.
 
 The tests use deterministic local fixtures and mocked Brave responses. Manually verify behavior affected by a change:
 
