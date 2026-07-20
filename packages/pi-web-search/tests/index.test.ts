@@ -39,6 +39,7 @@ interface RenderTheme {
 }
 
 interface SearchTool {
+  renderCall(args: { query: string }, theme: RenderTheme): RenderedComponent;
   execute(
     toolCallId: string,
     params: SearchParameters,
@@ -96,6 +97,7 @@ const renderTheme: RenderTheme = {
 const originalApiKey = process.env.BRAVE_SEARCH_API_KEY;
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   if (originalApiKey === undefined) delete process.env.BRAVE_SEARCH_API_KEY;
   else process.env.BRAVE_SEARCH_API_KEY = originalApiKey;
@@ -199,6 +201,25 @@ describe("web_search", () => {
     expect(collapsed).not.toContain("Second title");
     expect(expanded).toContain("Third title");
     expect(expanded).not.toContain("more lines");
+    expect(
+      tool.renderCall({ query: "pi extensions" }, renderTheme).render(200).join("\n"),
+    ).toContain("web_search pi extensions");
+    expect(
+      tool
+        .renderResult(result, { expanded: false, isPartial: true }, renderTheme)
+        .render(200)
+        .join("\n"),
+    ).toContain("Searching…");
+    expect(
+      tool
+        .renderResult(
+          { ...result, content: [] },
+          { expanded: false, isPartial: false },
+          renderTheme,
+        )
+        .render(200)
+        .join("\n"),
+    ).toContain("No results");
   });
 
   it("caches identical requests without caching secrets", async () => {
@@ -453,6 +474,31 @@ describe("web_search", () => {
     expect((error as Error).message).not.toContain("<b>");
     expect((error as Error).message.length).toBeLessThan(550);
     expect(cancelled).toBe(true);
+  });
+
+  it("reports provider timeouts", async () => {
+    vi.useFakeTimers();
+    process.env.BRAVE_SEARCH_API_KEY = "timeout-secret";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_input: string | URL | Request, init?: RequestInit) => {
+        await new Promise<void>((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () => reject(new Error("aborted")), {
+            once: true,
+          });
+        });
+        return jsonResponse({});
+      }),
+    );
+    const pending = createSearchTool().execute(
+      "call",
+      { query: "timeout query" },
+      undefined,
+      undefined,
+    );
+    const expectation = expect(pending).rejects.toThrow("timed out after 20 seconds");
+    await vi.advanceTimersByTimeAsync(20_000);
+    await expectation;
   });
 
   it("reports caller cancellation", async () => {
