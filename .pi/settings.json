@@ -1,9 +1,3 @@
 {
-  "packages": [
-    "../packages/pi-file-search",
-    "../packages/pi-nested-agent-md",
-    "../packages/pi-vite-plus",
-    "../packages/pi-web-fetch",
-    "../packages/pi-web-search"
-  ]
+  "packages": ["npm:@zeldrisho/pi-vite-plus"]
 }

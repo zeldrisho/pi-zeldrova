@@ -4,6 +4,7 @@
   "description": "Pi extension for bounded Brave web search and LLM context retrieval",
   "keywords": [
     "brave-search",
+    "pi",
     "pi-coding-agent",
     "pi-extension",
     "pi-package",
