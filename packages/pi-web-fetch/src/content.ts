@@ -1,0 +1,68 @@
+import { DEFAULT_MAX_BYTES, DEFAULT_MAX_LINES } from "@earendil-works/pi-coding-agent";
+
+const CONTENT_LINE_BUDGET = Math.max(1, DEFAULT_MAX_LINES - 10);
+const CONTENT_BYTE_BUDGET = Math.max(1_024, DEFAULT_MAX_BYTES - 2_048);
+const encoder = new TextEncoder();
+
+export interface CompleteDocument {
+  url: string;
+  contentType: string;
+  markdown: string;
+  title?: string;
+  extractor: "defuddle" | "basic" | "raw";
+}
+
+export interface FetchResult extends CompleteDocument {
+  offset: number;
+  nextOffset?: number;
+  totalCharacters: number;
+  truncated: boolean;
+}
+
+function sliceByByteLength(value: string, maxBytes: number): string {
+  if (encoder.encode(value).byteLength <= maxBytes) return value;
+  let low = 0;
+  let high = value.length;
+  while (low < high) {
+    const middle = Math.ceil((low + high) / 2);
+    if (encoder.encode(value.slice(0, middle)).byteLength <= maxBytes) low = middle;
+    else high = middle - 1;
+  }
+  if (low > 0 && /[\uD800-\uDBFF]/.test(value[low - 1])) low -= 1;
+  return value.slice(0, low);
+}
+
+function boundedContentChunk(value: string, offset: number, maxCharacters: number): string {
+  let chunk = value.slice(offset, offset + maxCharacters);
+  let newline = -1;
+  for (let lines = 1; lines < CONTENT_LINE_BUDGET; lines += 1) {
+    newline = chunk.indexOf("\n", newline + 1);
+    if (newline === -1) break;
+  }
+  if (newline !== -1) chunk = chunk.slice(0, newline);
+  return sliceByByteLength(chunk, CONTENT_BYTE_BUDGET);
+}
+
+export function sliceCompleteDocument(
+  document: CompleteDocument,
+  offset: number,
+  maxCharacters: number,
+): FetchResult {
+  const totalCharacters = document.markdown.length;
+  let markdown = boundedContentChunk(document.markdown, offset, maxCharacters);
+  const end = offset + markdown.length;
+  const truncated = end < totalCharacters;
+  if (truncated) {
+    markdown += `\n\n[Content truncated. Continue with offset=${end} to read the next chunk.]`;
+  } else if (offset > 0) {
+    markdown += "\n\n[End of page content.]";
+  }
+  return {
+    ...document,
+    markdown,
+    offset,
+    nextOffset: truncated ? end : undefined,
+    totalCharacters,
+    truncated,
+  };
+}

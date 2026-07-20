@@ -24,7 +24,7 @@
 ## Package Constraints
 
 - Keep each extension independent in `packages/<name>/`.
-- Keep runtime TypeScript in `src/` and tests in `test/`.
+- Keep runtime TypeScript in `src/` and tests in `tests/`.
 - Pi loads TypeScript directly; do not add a JavaScript build step.
 - Keep npm contents allowlisted with each package's `files` field.
 - Do not publish tests, TypeScript configuration, Vite configuration, or workspace files.

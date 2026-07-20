@@ -15,7 +15,7 @@ Set `BRAVE_SEARCH_API_KEY` only when manually exercising `pi-web-search`. Never 
 ## Package conventions
 
 - Keep each extension independent under `packages/<name>/`.
-- Put runtime TypeScript in `src/` and tests in `test/`; Pi loads TypeScript directly, so do not add a JavaScript build step.
+- Put runtime TypeScript in `src/` and tests in `tests/`; Pi loads TypeScript directly, so do not add a JavaScript build step.
 - Use `Type.Object()` from `typebox` for tool parameter schemas and `StringEnum` from `@earendil-works/pi-ai` for string enums.
 - Keep tool output within Pi's line and byte limits.
 - Treat fetched pages, search results, redirects, snippets, and error bodies as attacker-controlled input.

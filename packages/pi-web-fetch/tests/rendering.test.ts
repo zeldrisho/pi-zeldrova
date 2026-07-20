@@ -1,5 +1,7 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { describe, expect, it, vi } from "vite-plus/test";
+import { sliceCompleteDocument } from "../src/content";
+import { htmlToMarkdownFallback } from "../src/extract";
 import registerWebFetch from "../src/index";
 
 vi.mock("@earendil-works/pi-coding-agent", async (importOriginal) => {
@@ -31,6 +33,7 @@ describe("web_fetch rendering", () => {
     } as unknown as ExtensionAPI);
 
     const tool = registered as {
+      renderCall(args: { url: string }, theme: RenderTheme): RenderedComponent;
       renderResult(
         result: {
           content: Array<{ type: "text"; text: string }>;
@@ -70,5 +73,49 @@ describe("web_fetch rendering", () => {
     expect(collapsed).not.toContain("Fetched line 11");
     expect(expanded).toContain("Fetched line 12");
     expect(expanded).not.toContain("more lines");
+    expect(
+      tool.renderCall({ url: "https://example.com" }, renderTheme).render(200).join("\n"),
+    ).toContain("web_fetch https://example.com");
+    expect(
+      tool
+        .renderResult(result, { expanded: false, isPartial: true }, renderTheme)
+        .render(200)
+        .join("\n"),
+    ).toContain("Fetching…");
+    expect(
+      tool
+        .renderResult(
+          { ...result, content: [] },
+          { expanded: false, isPartial: false },
+          renderTheme,
+        )
+        .render(200)
+        .join("\n"),
+    ).toContain("No content");
+  });
+
+  it("bounds multibyte content without splitting a surrogate pair", () => {
+    const result = sliceCompleteDocument(
+      {
+        url: "https://example.com",
+        contentType: "text/plain",
+        markdown: "😀".repeat(100_000),
+        extractor: "raw",
+      },
+      0,
+      200_000,
+    );
+    expect(result.truncated).toBe(true);
+    expect(result.markdown).not.toMatch(/[\uD800-\uDBFF]\n\n\[Content truncated/);
+  });
+
+  it("provides a basic HTML fallback that removes non-content elements", () => {
+    const markdown = htmlToMarkdownFallback(
+      "<html><body>  Hello   world<nav>menu</nav><script>bad()</script><p>Next</p></body></html>",
+    );
+    expect(markdown).toContain("Hello world");
+    expect(markdown).toContain("Next");
+    expect(markdown).not.toContain("menu");
+    expect(markdown).not.toContain("bad()");
   });
 });
