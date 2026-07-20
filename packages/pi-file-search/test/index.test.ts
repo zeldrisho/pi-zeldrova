@@ -26,6 +26,7 @@ describe("file search guidance", () => {
 
     expect(result.systemPrompt).toBe(`base prompt\n\n${FILE_SEARCH_GUIDANCE}`);
     expect(result.systemPrompt).toContain("instead of `find` by default");
+    expect(result.systemPrompt).toContain("`fd --glob`");
   });
 
   it("does not add shell guidance when bash is inactive", () => {

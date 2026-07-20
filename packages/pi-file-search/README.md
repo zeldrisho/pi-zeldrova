@@ -10,8 +10,9 @@ Install `fd` and ensure it is available on your `PATH`, then install the package
 pi install npm:@zeldrisho/pi-file-search
 ```
 
-The extension adds file-search guidance when Pi's `bash` tool is active.
-It falls back to `find` when `fd` is unavailable or cannot express the required search.
+The extension adds file-search guidance when Pi's `bash` tool is active. It recommends `fd --glob` for glob-style path matching and falls back to `find` when `fd` is unavailable or cannot express the required search.
+
+`fd` can replace many recursive filename glob searches, but it does not replace shell glob expansion or every programmatic glob API.
 
 ## License
 
