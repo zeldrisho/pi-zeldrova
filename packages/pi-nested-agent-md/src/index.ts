@@ -203,6 +203,10 @@ export default function nestedAgents(pi: ExtensionAPI): void {
     injected.clear();
   });
 
+  pi.on("session_tree", () => {
+    injected.clear();
+  });
+
   pi.on("session_shutdown", () => {
     injected.clear();
   });

@@ -26,6 +26,7 @@ interface HandlerMap {
   session_start: EventHandler;
   tool_result: EventHandler;
   session_compact: EventHandler;
+  session_tree: EventHandler;
 }
 
 function registerHandlers(): HandlerMap {
@@ -39,6 +40,7 @@ function registerHandlers(): HandlerMap {
     session_start: handlers.get("session_start")!,
     tool_result: handlers.get("tool_result")!,
     session_compact: handlers.get("session_compact")!,
+    session_tree: handlers.get("session_tree")!,
   };
 }
 
@@ -116,6 +118,17 @@ describe("nested AGENTS.md discovery", () => {
 
     await expect(handlers.tool_result(readResult(target), context)).resolves.toBeUndefined();
     await handlers.session_compact({}, context);
+    await expect(handlers.tool_result(readResult(target), context)).resolves.toBeDefined();
+  });
+
+  it("reinjects instructions after tree navigation", async () => {
+    const { root, target } = await createTree();
+    const handlers = registerHandlers();
+    const context = { cwd: root };
+
+    await expect(handlers.tool_result(readResult(target), context)).resolves.toBeDefined();
+    await expect(handlers.tool_result(readResult(target), context)).resolves.toBeUndefined();
+    await handlers.session_tree({}, context);
     await expect(handlers.tool_result(readResult(target), context)).resolves.toBeDefined();
   });
 
