@@ -29,9 +29,15 @@ Pi loads the TypeScript source directly; packages do not have a JavaScript build
 
 ## Releases
 
-Packages are versioned independently with Release Please. Conventional commits that affect a package produce a package-specific release pull request. Merging a release pull request creates a component tag and GitHub release, then publishes only the released packages to npm through trusted publishing.
+Packages are versioned independently with Release Please. Conventional commits that affect packages are collected into one release pull request. The repository owner reviews and rebase-merges that pull request; the resulting component tags and GitHub releases publish only the released packages to npm.
 
-Publishing requires the repository's `publish` GitHub environment and trusted-publisher configuration on npm.
+Release automation requires:
+
+- a `RELEASE_PLEASE_TOKEN` repository secret whose fine-grained token can write repository contents, issues, and pull requests, so generated pull requests trigger required checks;
+- a protected `publish` GitHub environment; and
+- one npm trusted publisher per package for `zeldrisho/pi-zeldrova`, workflow `release.yml`, environment `publish`, with the `npm publish` action allowed.
+
+The release manifest must match versions already published to npm. All initial `0.2.0` component tags must point to the exact published source commit before the workflow is merged.
 
 ## Acknowledgments
 
