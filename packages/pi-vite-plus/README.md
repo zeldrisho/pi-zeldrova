@@ -16,6 +16,7 @@ pi -e npm:@zeldrisho/pi-vite-plus
 
 When Pi's `bash` tool is active, the extension guides agents to:
 
+- use `vp migrate` when migrating existing projects;
 - use `vp` commands for dependency workflows;
 - prefer direct Vite+ task commands and `vp run` for project tasks;
 - use `vp exec`, `vp dlx`, and `vp node` for local binaries, one-off packages, and Node.js scripts; and
