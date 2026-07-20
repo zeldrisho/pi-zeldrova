@@ -6,3 +6,10 @@
 ### Features
 
 * **web:** Add collapsible web tool results ([e8664d6](https://github.com/zeldrisho/pi-zeldrova/commit/e8664d6c07b719d92f18d9a0048b47cc1970b97c))
+
+## 0.2.0 (2026-07-19)
+
+
+### Features
+
+* **web-search:** Add bounded Brave web search ([cbc9491](https://github.com/zeldrisho/pi-zeldrova/commit/cbc9491dce36555ab91b6bef203ec8b380596a89))
