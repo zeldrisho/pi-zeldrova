@@ -1,7 +1,8 @@
 {
   "name": "@zeldrisho/pi-zeldrova",
   "private": true,
-  "description": "Monorepo for @zeldrisho Pi packages",
+  "description": "Monorepo for independently published Pi extensions.",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "check": "vp check",
