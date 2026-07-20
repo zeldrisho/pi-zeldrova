@@ -1,0 +1,13 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-type": "node",
+  "include-component-in-tag": true,
+  "separate-pull-requests": false,
+  "packages": {
+    "packages/pi-file-search": {},
+    "packages/pi-nested-agent-md": {},
+    "packages/pi-vite-plus": {},
+    "packages/pi-web-fetch": {},
+    "packages/pi-web-search": {}
+  }
+}

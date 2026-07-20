@@ -14,7 +14,13 @@ export default defineConfig({
     },
   },
   fmt: {
-    ignorePatterns: ["**/CHANGELOG.md", "coverage/**", "dist/**", "pnpm-lock.yaml"],
+    ignorePatterns: [
+      "**/CHANGELOG.md",
+      ".release-please-manifest.json",
+      "coverage/**",
+      "dist/**",
+      "pnpm-lock.yaml",
+    ],
     printWidth: 100,
     tabWidth: 2,
     useTabs: false,
