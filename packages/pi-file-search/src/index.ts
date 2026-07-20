@@ -3,6 +3,7 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 export const FILE_SEARCH_GUIDANCE = `## File search
 
 - Use \`fd\` via the \`bash\` tool for file and directory searches instead of \`find\` by default.
+- Use \`fd --glob\` when glob-style path matching is needed.
 - Fall back to \`find\` only when \`fd\` is unavailable or cannot express the required search.`;
 
 /** Prefer fd for filesystem searches when the shell tool is available. */
