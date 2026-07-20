@@ -1,6 +1,6 @@
 {
   "name": "@zeldrisho/pi-file-search",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Pi extension that guides agents to prefer fd for file discovery",
   "keywords": [
     "fd",
