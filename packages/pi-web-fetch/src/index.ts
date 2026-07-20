@@ -7,13 +7,16 @@ import {
   DEFAULT_MAX_BYTES,
   DEFAULT_MAX_LINES,
   formatSize,
-  keyHint,
   truncateHead,
 } from "@earendil-works/pi-coding-agent";
 import { Text } from "@earendil-works/pi-tui";
-import { Defuddle } from "defuddle/node";
 import { parseHTML } from "linkedom";
 import { Type } from "typebox";
+import { ExpiringLruCache } from "./cache";
+import { InflightCoalescer } from "./inflight";
+import { formatCollapsibleOutput } from "./render";
+
+export { ExpiringLruCache } from "./cache";
 
 const REQUEST_TIMEOUT_MS = 20_000;
 const FETCH_MAX_BYTES = 1_000_000;
@@ -22,6 +25,7 @@ const FETCH_MAX_REDIRECTS = 5;
 const CACHE_TTL_MS = 10 * 60 * 1_000;
 const CACHE_MAX_ENTRIES = 100;
 const CACHE_MAX_MARKDOWN_BYTES = 20 * 1_024 * 1_024;
+const MAX_INFLIGHT_REQUESTS = 100;
 const CONTENT_LINE_BUDGET = Math.max(1, DEFAULT_MAX_LINES - 10);
 const CONTENT_BYTE_BUDGET = Math.max(1_024, DEFAULT_MAX_BYTES - 2_048);
 const encoder = new TextEncoder();
@@ -153,6 +157,7 @@ async function extractHtmlToMarkdown(
   baseUrl: URL,
 ): Promise<{ markdown: string; title?: string; extractor: "defuddle" | "basic" }> {
   try {
+    const { Defuddle } = await import("defuddle/node");
     const { document } = parseHTML(html);
     const result = await Defuddle(document as unknown as Document, baseUrl.toString(), {
       markdown: true,
@@ -262,71 +267,12 @@ function decodeResponse(bytes: Uint8Array, contentTypeHeader: string): string {
   }
 }
 
-interface ExpiringCacheEntry<V> {
-  expiresAt: number;
-  size: number;
-  value: V;
-}
-
-export class ExpiringLruCache<K, V> {
-  readonly #entries = new Map<K, ExpiringCacheEntry<V>>();
-  #byteSize = 0;
-
-  constructor(
-    readonly maxEntries: number,
-    readonly maxBytes: number,
-    readonly sizeOf: (value: V) => number,
-    readonly now: () => number = Date.now,
-  ) {}
-
-  get byteSize(): number {
-    return this.#byteSize;
-  }
-
-  get size(): number {
-    return this.#entries.size;
-  }
-
-  get(key: K): V | undefined {
-    const entry = this.#entries.get(key);
-    if (!entry) return undefined;
-    if (entry.expiresAt <= this.now()) {
-      this.#delete(key);
-      return undefined;
-    }
-    this.#entries.delete(key);
-    this.#entries.set(key, entry);
-    return entry.value;
-  }
-
-  set(key: K, value: V, expiresAt: number): boolean {
-    this.#delete(key);
-    const size = this.sizeOf(value);
-    if (size > this.maxBytes) return false;
-
-    this.#entries.set(key, { expiresAt, size, value });
-    this.#byteSize += size;
-    while (this.#entries.size > this.maxEntries || this.#byteSize > this.maxBytes) {
-      const oldest = this.#entries.keys().next().value;
-      if (oldest === undefined) break;
-      this.#delete(oldest);
-    }
-    return this.#entries.has(key);
-  }
-
-  #delete(key: K): void {
-    const entry = this.#entries.get(key);
-    if (!entry) return;
-    this.#entries.delete(key);
-    this.#byteSize -= entry.size;
-  }
-}
-
 const fetchCache = new ExpiringLruCache<string, CompleteDocument>(
   CACHE_MAX_ENTRIES,
   CACHE_MAX_MARKDOWN_BYTES,
   (document) => encoder.encode(document.markdown).byteLength,
 );
+const inflightFetches = new InflightCoalescer<string, CompleteDocument>(MAX_INFLIGHT_REQUESTS);
 
 export interface FetchRemoteDependencies {
   validateUrl?: (value: string | URL) => Promise<ValidatedTarget>;
@@ -496,13 +442,6 @@ interface WebFetchUpdate {
   details: Record<string, never>;
 }
 
-interface WebFetchDetails {
-  extractor: "defuddle" | "basic" | "raw";
-  cached: boolean;
-  truncated: boolean;
-  characterCount: number;
-}
-
 export async function executeWebFetch(
   params: WebFetchParameters,
   signal: AbortSignal | undefined,
@@ -523,8 +462,16 @@ export async function executeWebFetch(
     details: {},
   });
   if (!document) {
-    document = await fetchCompleteDocument(params.url, signal, dependencies);
-    fetchCache.set(params.url, document, Date.now() + CACHE_TTL_MS);
+    document = await inflightFetches.run(
+      params.url,
+      async (sharedSignal) => {
+        const fetched = await fetchCompleteDocument(params.url, sharedSignal, dependencies);
+        fetchCache.set(params.url, fetched, Date.now() + CACHE_TTL_MS);
+        return fetched;
+      },
+      signal,
+      "web_fetch was cancelled.",
+    );
   }
   const result = sliceCompleteDocument(document, offset, maxCharacters);
   const output = [
@@ -605,26 +552,14 @@ export default function (pi: ExtensionAPI) {
     renderResult(result, { expanded, isPartial }, theme) {
       if (isPartial) return new Text(theme.fg("warning", "Fetching…"), 0, 0);
 
-      const details = result.details as WebFetchDetails | undefined;
-      if (!details) return new Text(theme.fg("dim", "No content"), 0, 0);
-
-      if (!expanded) {
-        const flags = [
-          details.extractor,
-          details.cached ? "cached" : undefined,
-          details.truncated ? "more available" : undefined,
-        ]
-          .filter(Boolean)
-          .join(" · ");
-        return new Text(
-          `${theme.fg("success", `${details.characterCount} characters`)} ${theme.fg("muted", `· ${flags}`)} (${keyHint("app.tools.expand", "to expand")})`,
-          0,
-          0,
-        );
-      }
-
       const content = result.content.find((item) => item.type === "text");
-      return new Text(content?.type === "text" ? theme.fg("toolOutput", content.text) : "", 0, 0);
+      return new Text(
+        content?.type === "text"
+          ? formatCollapsibleOutput(content.text, expanded, theme)
+          : theme.fg("dim", "No content"),
+        0,
+        0,
+      );
     },
   });
 }

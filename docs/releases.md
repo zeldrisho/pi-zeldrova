@@ -19,7 +19,7 @@ Release automation requires:
 - a protected `publish` GitHub environment; and
 - one npm trusted publisher per package for `zeldrisho/pi-zeldrova`, workflow `release.yml`, environment `publish`, with the `npm publish` action allowed.
 
-The workflow grants `id-token: write` only to the publish job and publishes only package paths reported as released by Release Please. Keep workflow actions pinned to full commit SHAs.
+The workflow validates each pushed commit before Release Please can create tags or releases, serializes release runs, grants `id-token: write` only to the publish job, and publishes only package paths reported as released by Release Please. Keep workflow actions pinned to full commit SHAs.
 
 ## Release procedure
 

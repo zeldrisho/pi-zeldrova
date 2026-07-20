@@ -12,6 +12,7 @@
     "format": "vp fmt --write",
     "typecheck": "vp check --no-fmt --no-lint",
     "pack:dry-run": "for package in packages/*; do (cd \"$package\" && vp pm pack -- --dry-run) || exit; done",
+    "test:packages": "node scripts/package-smoke-test.mjs",
     "prepare": "vp config"
   },
   "devDependencies": {

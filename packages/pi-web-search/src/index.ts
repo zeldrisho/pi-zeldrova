@@ -6,13 +6,17 @@ import {
   DEFAULT_MAX_BYTES,
   DEFAULT_MAX_LINES,
   formatSize,
-  keyHint,
   truncateHead,
   withFileMutationQueue,
 } from "@earendil-works/pi-coding-agent";
 import { StringEnum } from "@earendil-works/pi-ai";
 import { Text } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
+import { ExpiringLruCache } from "./cache";
+import { InflightCoalescer } from "./inflight";
+import { formatCollapsibleOutput } from "./render";
+
+export { ExpiringLruCache } from "./cache";
 
 const DEFAULT_RESULT_COUNT = 5;
 const BRAVE_MAX_CONTEXT_TOKENS = 2_048;
@@ -24,6 +28,9 @@ const SEARCH_MAX_RESPONSE_BYTES = 2_000_000;
 const SEARCH_ERROR_EXCERPT_BYTES = 8_192;
 const CACHE_TTL_MS = 10 * 60 * 1_000;
 const CACHE_MAX_ENTRIES = 100;
+const CACHE_MAX_RESULT_BYTES = 20 * 1_024 * 1_024;
+const MAX_INFLIGHT_REQUESTS = 100;
+const encoder = new TextEncoder();
 
 type Provider = "brave";
 type Freshness = "day" | "week" | "month" | "year";
@@ -46,17 +53,12 @@ interface SearchDetails {
   fullOutputPath?: string;
 }
 
-const searchCache = new Map<string, { expiresAt: number; results: SearchResult[] }>();
-
-function setCacheEntry(key: string, value: { expiresAt: number; results: SearchResult[] }): void {
-  searchCache.delete(key);
-  searchCache.set(key, value);
-  while (searchCache.size > CACHE_MAX_ENTRIES) {
-    const oldest = searchCache.keys().next().value;
-    if (oldest === undefined) break;
-    searchCache.delete(oldest);
-  }
-}
+const searchCache = new ExpiringLruCache<string, SearchResult[]>(
+  CACHE_MAX_ENTRIES,
+  CACHE_MAX_RESULT_BYTES,
+  (results) => encoder.encode(JSON.stringify(results)).byteLength,
+);
+const inflightSearches = new InflightCoalescer<string, SearchResult[]>(MAX_INFLIGHT_REQUESTS);
 
 function configuredProvider(): Provider {
   if (!process.env.BRAVE_SEARCH_API_KEY) {
@@ -422,8 +424,7 @@ export default function (pi: ExtensionAPI) {
         language: params.language,
       });
       const cachedEntry = searchCache.get(cacheKey);
-      const cached = Boolean(cachedEntry && cachedEntry.expiresAt > Date.now());
-      if (cachedEntry && !cached) searchCache.delete(cacheKey);
+      const cached = cachedEntry !== undefined;
       onUpdate?.({
         content: [
           {
@@ -437,15 +438,35 @@ export default function (pi: ExtensionAPI) {
       });
 
       let results: SearchResult[];
-      if (cachedEntry && cached) {
-        results = cachedEntry.results;
+      if (cachedEntry) {
+        results = cachedEntry;
       } else {
-        results =
-          mode === "context"
-            ? await searchBraveContext(query, count, params.freshness, params.language, signal)
-            : await searchBraveWeb(query, count, params.freshness, params.language, signal);
-        results = results.filter((result) => result.url).slice(0, count);
-        setCacheEntry(cacheKey, { expiresAt: Date.now() + CACHE_TTL_MS, results });
+        results = await inflightSearches.run(
+          cacheKey,
+          async (sharedSignal) => {
+            const found =
+              mode === "context"
+                ? await searchBraveContext(
+                    query,
+                    count,
+                    params.freshness,
+                    params.language,
+                    sharedSignal,
+                  )
+                : await searchBraveWeb(
+                    query,
+                    count,
+                    params.freshness,
+                    params.language,
+                    sharedSignal,
+                  );
+            const bounded = found.filter((result) => result.url).slice(0, count);
+            searchCache.set(cacheKey, bounded, Date.now() + CACHE_TTL_MS);
+            return bounded;
+          },
+          signal,
+          "Web search was cancelled.",
+        );
       }
 
       results = results.filter((result) => result.url).slice(0, count);
@@ -491,27 +512,14 @@ export default function (pi: ExtensionAPI) {
     renderResult(result, { expanded, isPartial }, theme) {
       if (isPartial) return new Text(theme.fg("warning", "Searching…"), 0, 0);
 
-      const details = result.details as SearchDetails | undefined;
-      if (!details) return new Text(theme.fg("dim", "No results"), 0, 0);
-
-      if (!expanded) {
-        const count = `${details.resultCount} ${details.resultCount === 1 ? "result" : "results"}`;
-        const flags = [
-          details.mode,
-          details.cached ? "cached" : undefined,
-          details.truncated ? "truncated" : undefined,
-        ]
-          .filter(Boolean)
-          .join(" · ");
-        return new Text(
-          `${theme.fg("success", count)} ${theme.fg("muted", `· ${flags}`)} (${keyHint("app.tools.expand", "to expand")})`,
-          0,
-          0,
-        );
-      }
-
       const content = result.content.find((item) => item.type === "text");
-      return new Text(content?.type === "text" ? theme.fg("toolOutput", content.text) : "", 0, 0);
+      return new Text(
+        content?.type === "text"
+          ? formatCollapsibleOutput(content.text, expanded, theme)
+          : theme.fg("dim", "No results"),
+        0,
+        0,
+      );
     },
   });
 }

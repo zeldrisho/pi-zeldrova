@@ -4,8 +4,10 @@ export default defineConfig({
   test: {
     coverage: {
       provider: "v8",
-      reporter: ["text"],
+      reporter: [["text", { skipFull: false }]],
+      include: ["packages/*/src/**/*.ts"],
       thresholds: {
+        perFile: true,
         lines: 80,
         functions: 75,
         statements: 75,

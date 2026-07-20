@@ -89,6 +89,25 @@ export async function findNestedAgentsFiles(root: string, inputPath: string): Pr
   return found.reverse();
 }
 
+function safePathText(value: string): string {
+  return value
+    .split("")
+    .map((character) => {
+      const codeUnit = character.charCodeAt(0);
+      return codeUnit <= 0x1f || (codeUnit >= 0x7f && codeUnit <= 0x9f) ? "\uFFFD" : character;
+    })
+    .join("");
+}
+
+function escapeXmlAttribute(value: string): string {
+  return safePathText(value)
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
 function originalText(content: readonly { type: string; text?: string }[]): string {
   return content
     .filter(
@@ -100,11 +119,11 @@ function originalText(content: readonly { type: string; text?: string }[]): stri
 }
 
 function formatContext(root: string, path: string, content: string, truncated: boolean): string {
-  const displayPath = relative(root, path) || basename(path);
-  const scope = relative(root, dirname(path)) || ".";
+  const displayPath = safePathText(relative(root, path) || basename(path));
+  const scope = safePathText(relative(root, dirname(path)) || ".");
   const note = truncated ? "\n[AGENTS.md truncated to fit Pi's tool-output limits.]" : "";
   return (
-    `\n\n<nested_agents_context path="${displayPath}" scope="${scope}">\n` +
+    `\n\n<nested_agents_context path="${escapeXmlAttribute(displayPath)}" scope="${escapeXmlAttribute(scope)}">\n` +
     `The following instructions apply to files under ${scope}/.\n\n${content}${note}\n</nested_agents_context>`
   );
 }

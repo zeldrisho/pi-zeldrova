@@ -44,14 +44,15 @@ Run the repository checks, test suite, and package inspection:
 vp check
 vp test --coverage
 vp run pack:dry-run
+vp run test:packages
 ```
 
-Every dry-run tarball must contain only `LICENSE`, `package.json`, `README.md`, and `src/index.ts`.
+Every dry-run tarball must contain only `LICENSE`, `package.json`, `README.md`, and the package's runtime files under `src/`. The packaged smoke test installs each tarball in an isolated fixture and loads it through Pi's extension loader.
 
 The tests use deterministic local fixtures and mocked Brave responses. Manually verify behavior affected by a change:
 
-- `pi-web-search`: missing-key errors, web/context modes, filters, caching, cancellation, truncation, and temporary-file cleanup;
-- `pi-web-fetch`: supported formats, redirects, blocked local/private targets, oversized responses, caching, and offset continuation; and
+- `pi-web-search`: missing-key errors, web/context modes, filters, byte-bounded caching, request coalescing, cancellation, truncation, and temporary-file cleanup;
+- `pi-web-fetch`: supported formats, redirects, blocked local/private targets, oversized responses, caching, request coalescing, and offset continuation; and
 - `pi-nested-agent-md`: ancestor ordering, direct reads, deduplication, paths outside the working directory, output bounds, and reinjection after compaction.
 
 To load local packages in an isolated Pi session, use the repository's `.pi/settings.json` and disable globally installed extensions as needed so they cannot interfere with manual verification.
