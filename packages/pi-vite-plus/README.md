@@ -16,6 +16,12 @@ pi -e npm:@zeldrisho/pi-vite-plus
 
 When Pi's `bash` tool is active, the extension injects the official Vite+ CLI agent guidance. It explains the unified `vp` CLI, points agents to the Vite+ documentation, and provides a review checklist covering installation, checks, tests, project tasks, and environment diagnostics.
 
+## Update
+
+```bash
+pi update npm:@zeldrisho/pi-vite-plus
+```
+
 ## Uninstall
 
 ```bash
