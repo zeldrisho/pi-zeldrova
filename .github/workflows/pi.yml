@@ -1,0 +1,48 @@
+name: Pi Code Assist
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: pi-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    # Repository secrets are unavailable to fork and Dependabot pull requests.
+    if: github.event.pull_request.head.repo.fork == false && github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - id: pi
+        uses: zeldrisho/pi-code-assist@848f959a0f7e9733265b06c526cbff5fac8dcee8 # v1.0.0
+        with:
+          api-key: ${{ secrets.OPENCODE_API_KEY }}
+          provider: opencode
+          model: deepseek-v4-flash-free
+          github-tools: read
+          tools: all
+          project-trust: true
+          packages: |
+            npm:@zeldrisho/pi-web-search@0.3.0
+            npm:@zeldrisho/pi-web-fetch@0.3.0
+          prompt: |
+            Load https://raw.githubusercontent.com/anthropics/knowledge-work-plugins/refs/heads/main/engineering/skills/code-review/SKILL.md, then review this pull request.
+
+      - name: Post review
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          RESPONSE_FILE: ${{ steps.pi.outputs.response-path }}
+        run: gh pr comment "$PR_NUMBER" --body-file "$RESPONSE_FILE"
