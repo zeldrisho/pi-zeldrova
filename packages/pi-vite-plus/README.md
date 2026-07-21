@@ -14,13 +14,7 @@ To try it for one session without installing it:
 pi -e npm:@zeldrisho/pi-vite-plus
 ```
 
-When Pi's `bash` tool is active, the extension guides agents to:
-
-- use `vp migrate` when migrating existing projects;
-- use `vp` commands for dependency workflows;
-- prefer direct Vite+ task commands and `vp run` for project tasks;
-- use `vp exec`, `vp dlx`, and `vp node` for local binaries, one-off packages, and Node.js scripts; and
-- preserve the underlying package-manager metadata and fall back only when Vite+ is unavailable or incompatible with the required operation.
+When Pi's `bash` tool is active, the extension injects the official Vite+ CLI agent guidance. It explains the unified `vp` CLI, points agents to the Vite+ documentation, and provides a review checklist covering installation, checks, tests, project tasks, and environment diagnostics.
 
 ## Uninstall
 
