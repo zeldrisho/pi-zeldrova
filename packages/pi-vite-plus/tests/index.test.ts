@@ -25,17 +25,17 @@ describe("Vite+ guidance", () => {
     }) as { systemPrompt: string };
 
     expect(result.systemPrompt).toBe(`base prompt\n\n${VITE_PLUS_GUIDANCE}`);
-    expect(result.systemPrompt).toContain("a unified web toolchain");
-    expect(result.systemPrompt).toContain("Prefer `vp` when available");
-    expect(result.systemPrompt).toContain("`vp migrate` when migrating an existing project");
-    expect(result.systemPrompt).toContain("`vp install`, `vp add`, `vp remove`, and `vp update`");
-    expect(result.systemPrompt).toContain("built-in commands");
-    expect(result.systemPrompt).toContain("`vp run <task>` (or `vpr <task>`)");
-    expect(result.systemPrompt).toContain("`vp exec <binary>`");
-    expect(result.systemPrompt).toContain("project-specific validation tasks");
-    expect(result.systemPrompt).toContain("`vp env doctor`");
-    expect(result.systemPrompt).toContain("use `vp pm <command>`");
-    expect(result.systemPrompt).toContain("Invoke the underlying package manager directly only");
+    expect(result.systemPrompt).toContain("<!--VITE PLUS START-->");
+    expect(result.systemPrompt).toContain("# Using Vite+, the Unified Toolchain for the Web");
+    expect(result.systemPrompt).toContain("a single global CLI called `vp`");
+    expect(result.systemPrompt).toContain("`vp help`");
+    expect(result.systemPrompt).toContain("https://viteplus.dev/guide/");
+    expect(result.systemPrompt).toContain("## Review Checklist");
+    expect(result.systemPrompt).toContain("Run `vp install` after pulling remote changes");
+    expect(result.systemPrompt).toContain("Run `vp check` and `vp test`");
+    expect(result.systemPrompt).toContain("run via `vp run <script>`");
+    expect(result.systemPrompt).toContain("run `vp env doctor`");
+    expect(result.systemPrompt).toContain("<!--VITE PLUS END-->");
   });
 
   it("does not add command guidance when bash is inactive", () => {
