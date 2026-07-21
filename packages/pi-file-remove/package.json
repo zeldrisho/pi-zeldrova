@@ -1,6 +1,6 @@
 {
   "name": "@zeldrisho/pi-file-remove",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Pi extension that guides agents to use gomi for recoverable file removal",
   "keywords": [
     "file-removal",
