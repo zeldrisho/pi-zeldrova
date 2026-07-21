@@ -66,8 +66,10 @@ describe("rm invocation detection", () => {
     "echo done && rm file.txt",
     "command rm file.txt",
     "sudo rm file.txt",
+    "/rm file.txt",
     "/bin/rm file.txt",
-    "/usr/bin/rm file.txt",
+    "/usr/local/bin/rm file.txt",
+    "exec sudo rm file.txt",
     "rm \\\n      file.txt",
   ])("detects %j", (command) => {
     expect(containsRmInvocation(command)).toBe(true);
@@ -79,19 +81,33 @@ describe("rm invocation detection", () => {
       expect(containsRmInvocation(command)).toBe(false);
     },
   );
+
+  it("handles long path-like input without ambiguous backtracking", () => {
+    expect(containsRmInvocation(`\n/${"!/".repeat(10_000)}not-rm`)).toBe(false);
+  });
 });
 
 describe("permanent deletion gate", () => {
-  it("blocks rm when user confirmation is unavailable", async () => {
+  it("blocks rm without requesting confirmation when UI is unavailable", async () => {
+    let confirmationRequested = false;
     const result = await registerHandlers().toolCall(
       { toolName: "bash", input: { command: "rm file.txt" } },
-      { hasUI: false, ui: { confirm: async () => true } },
+      {
+        hasUI: false,
+        ui: {
+          confirm: async () => {
+            confirmationRequested = true;
+            return true;
+          },
+        },
+      },
     );
 
     expect(result).toEqual({
       block: true,
       reason: "Permanent deletion blocked without user confirmation. Use gomi instead.",
     });
+    expect(confirmationRequested).toBe(false);
   });
 
   it("blocks rm when the user declines", async () => {
