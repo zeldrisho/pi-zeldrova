@@ -95,7 +95,7 @@ for (const packageName of packageNames) {
   );
 
   run("vp", ["install", "--ignore-scripts", "--shamefully-hoist"], fixtureDirectory);
-  run("node", ["smoke.mjs"], fixtureDirectory);
+  run("vp", ["exec", "node", "smoke.mjs"], fixtureDirectory);
   console.log(`Smoke-tested ${packageNames.length} packed Pi extensions.`);
 } finally {
   await rm(temporaryDirectory, { recursive: true, force: true });

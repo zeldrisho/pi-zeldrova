@@ -5,6 +5,7 @@
 | Task                                 | Command                              |
 | ------------------------------------ | ------------------------------------ |
 | Install dependencies                 | `vp install`                         |
+| Complete validation                  | `vp run validate`                    |
 | Check formatting, linting, and types | `vp check`                           |
 | Fix check failures                   | `vp check --fix`                     |
 | Run all tests                        | `vp test`                            |
@@ -17,6 +18,7 @@
 | -------------------------- | ---------------------------------------------------------------- |
 | Package catalog            | `README.md`                                                      |
 | Development                | `docs/development.md`                                            |
+| Security invariants        | `docs/security.md`                                               |
 | Package behavior and setup | `packages/*/README.md`                                           |
 | Release process            | `docs/releases.md`                                               |
 | Release configuration      | `release-please-config.json` and `.github/workflows/release.yml` |

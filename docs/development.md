@@ -25,29 +25,17 @@ Set `BRAVE_SEARCH_API_KEY` only when manually exercising `pi-web-search`. Never 
 
 ## Security invariants
 
-Changes to `pi-web-fetch` must preserve:
-
-- HTTP(S)-only URLs and rejection of embedded credentials;
-- DNS validation that rejects local, private, and reserved targets;
-- validation of every redirect target;
-- redirect, timeout, and response-size bounds;
-- an allowlist of textual response media types; and
-- untrusted-content wrappers and closing-tag escaping.
-
-Changes to `pi-web-search` must preserve API-key secrecy, request timeouts, bounded output, temporary-file cleanup, and untrusted-content wrappers.
+Read [`security.md`](security.md) before changing extension runtime behavior, tool schemas, network access, filesystem access, credentials, caching, or output rendering.
 
 ## Verification
 
-Run the repository checks, test suite, and package inspection:
+Run the complete validation suite:
 
 ```bash
-vp check
-vp test --coverage
-vp run pack:dry-run
-vp run test:packages
+vp run validate
 ```
 
-Every dry-run tarball must contain only `CHANGELOG.md`, `LICENSE`, `package.json`, `README.md`, and the package's runtime files under `src/`. The packaged smoke test installs each tarball in an isolated fixture and loads it through Pi's extension loader.
+The shared task runs formatting, linting, type checking, coverage tests, repository contract tests, tarball inspection, and packaged extension smoke tests. Every dry-run tarball must contain only `CHANGELOG.md`, `LICENSE`, `package.json`, `README.md`, and the package's runtime files under `src/`. The packaged smoke test installs each tarball in an isolated fixture and loads it through Pi's extension loader.
 
 The tests use deterministic local fixtures and mocked Brave responses. Manually verify behavior affected by a change:
 

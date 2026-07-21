@@ -9,9 +9,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
@@ -21,7 +26,4 @@ jobs:
           cache: true
 
       - run: vp install
-      - run: vp check
-      - run: vp test --coverage
-      - run: vp run pack:dry-run
-      - run: vp run test:packages
+      - run: vp run validate
