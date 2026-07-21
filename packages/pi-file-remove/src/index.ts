@@ -7,7 +7,7 @@ export const FILE_REMOVE_GUIDANCE = `## File removal
 - Use \`rm\` only for user-approved permanent deletion.`;
 
 const RM_INVOCATION =
-  /(?:^|[\n;&|({])\s*(?:(?:(?:command|exec)\s+(?:-[^\s]+\s+)*|sudo\s+(?:-[^\s]+\s+)*)*)(?:(?:\/[^\s;&|()]+)*\/)?rm(?=\s|$)/;
+  /(?:^|[\n;&|({])\s*(?:(?:command|exec|sudo)\s+(?:-[^\s]+\s+)*)*(?:rm|\/(?:[^\s/;&|()]+\/)*rm)(?=\s|$)/;
 
 /** Detect common direct rm invocations. This is a safety guard, not a shell sandbox. */
 export function containsRmInvocation(command: string): boolean {
