@@ -1,13 +1,20 @@
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { isToolCallEventType, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 export const FILE_REMOVE_GUIDANCE = `## File removal
 
-- Use \`gomi\` via the \`bash\` tool instead of \`rm\` when removing files or directories.
-- \`gomi\` moves removed items to trash so they can be restored; pass file and directory paths as you would to \`rm\`.
-- If \`gomi\` is unavailable, stop and tell the user how to install it rather than silently falling back to \`rm\`.
-- Use \`rm\` only when the user explicitly requires permanent deletion, and state why \`gomi\` is unsuitable first.`;
+- Use \`gomi\` instead of \`rm\` to move files and directories to recoverable trash.
+- If \`gomi\` is unavailable, stop and tell the user how to install it; never silently fall back to \`rm\`.
+- Use \`rm\` only for user-approved permanent deletion.`;
 
-/** Prefer recoverable file removal with gomi when shell commands are available. */
+const RM_INVOCATION =
+  /(?:^|[\n;&|({])\s*(?:(?:(?:command|exec)\s+(?:-[^\s]+\s+)*|sudo\s+(?:-[^\s]+\s+)*)*)(?:(?:\/[^\s;&|()]+)*\/)?rm(?=\s|$)/;
+
+/** Detect common direct rm invocations. This is a safety guard, not a shell sandbox. */
+export function containsRmInvocation(command: string): boolean {
+  return RM_INVOCATION.test(command.replaceAll(/\\\r?\n/g, " "));
+}
+
+/** Prefer recoverable file removal with gomi and gate permanent deletion. */
 export default function fileRemove(pi: ExtensionAPI): void {
   pi.on("before_agent_start", (event) => {
     if (!event.systemPromptOptions.selectedTools?.includes("bash")) return;
@@ -15,5 +22,25 @@ export default function fileRemove(pi: ExtensionAPI): void {
     return {
       systemPrompt: `${event.systemPrompt}\n\n${FILE_REMOVE_GUIDANCE}`,
     };
+  });
+
+  pi.on("tool_call", async (event, ctx) => {
+    if (!isToolCallEventType("bash", event) || !containsRmInvocation(event.input.command)) return;
+
+    if (!ctx.hasUI) {
+      return {
+        block: true,
+        reason: "Permanent deletion blocked without user confirmation. Use gomi instead.",
+      };
+    }
+
+    const allowed = await ctx.ui.confirm(
+      "Permanent deletion",
+      `Allow this command?\n\n${event.input.command}`,
+    );
+
+    if (!allowed) {
+      return { block: true, reason: "Permanent deletion was not approved." };
+    }
   });
 }
