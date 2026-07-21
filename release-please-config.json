@@ -4,6 +4,7 @@
   "include-component-in-tag": true,
   "separate-pull-requests": false,
   "packages": {
+    "packages/pi-file-remove": {},
     "packages/pi-file-search": {},
     "packages/pi-nested-agent-md": {},
     "packages/pi-vite-plus": {},
