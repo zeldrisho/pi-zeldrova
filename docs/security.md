@@ -15,7 +15,8 @@ Use this checklist when reviewing extension runtime behavior, tool schemas, netw
 ## Filesystem and project context
 
 - `pi-nested-agent-md` must reject paths outside the project, including traversal and symlink escapes; preserve outermost-to-innermost instruction ordering, deduplication, and bounded reinjection after context resets.
-- `pi-file-remove` and `pi-file-search` provide guidance only; they must not execute removal or discovery commands themselves or silently broaden Pi's tool permissions.
+- `pi-file-remove` must not execute removal commands itself or silently broaden Pi's tool permissions; detected `rm` tool calls require user confirmation and fail closed when confirmation is unavailable.
+- `pi-file-search` provides guidance only; it must not execute discovery commands itself or silently broaden Pi's tool permissions.
 - `pi-vite-plus` provides workflow guidance only; it must not change package-manager metadata or run migration, install, or publish commands itself.
 
 ## Web fetch
