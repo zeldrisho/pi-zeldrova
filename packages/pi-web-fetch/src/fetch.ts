@@ -17,6 +17,7 @@ const FETCH_MAX_REDIRECTS = 5;
 export interface FetchRemoteDependencies {
   validateUrl?: (value: string | URL) => Promise<ValidatedTarget>;
   request?: (target: ValidatedTarget, signal: AbortSignal) => Promise<IncomingMessage>;
+  extractHtml?: typeof extractHtmlToMarkdown;
   timeoutMs?: number;
 }
 
@@ -53,6 +54,7 @@ export async function fetchCompleteDocument(
   const timeoutMs = dependencies.timeoutMs ?? REQUEST_TIMEOUT_MS;
   const validateUrl = dependencies.validateUrl ?? validateRemoteUrl;
   const request = dependencies.request ?? requestPinned;
+  const extractHtml = dependencies.extractHtml ?? extractHtmlToMarkdown;
   let timedOut = false;
   const timeout = setTimeout(() => {
     timedOut = true;
@@ -107,7 +109,7 @@ export async function fetchCompleteDocument(
       let title: string | undefined;
       let extractor: CompleteDocument["extractor"] = "raw";
       if (contentType === "text/html" || contentType === "application/xhtml+xml") {
-        const extracted = await extractHtmlToMarkdown(raw, target.url);
+        const extracted = await awaitWithAbort(extractHtml(raw, target.url), controller.signal);
         markdown = extracted.markdown;
         title = extracted.title;
         extractor = extracted.extractor;
