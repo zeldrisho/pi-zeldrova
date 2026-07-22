@@ -16,7 +16,7 @@ export default function (pi: ExtensionAPI) {
     name: "web_search",
     label: "Web Search",
     description:
-      "Search the public web with Brave. Returns source links and snippets, or extracted grounding context.",
+      "Search the public web with Brave. Returns bounded source links and snippets, or extracted grounding context.",
     promptSnippet: "Search the public web for current information and source URLs",
     promptGuidelines: [
       "Use web_search when current, post-training, or source-backed information is needed.",
