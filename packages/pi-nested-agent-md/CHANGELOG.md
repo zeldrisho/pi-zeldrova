@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/zeldrisho/pi-zeldrova/compare/pi-nested-agent-md-v0.2.1...pi-nested-agent-md-v0.2.2) (2026-07-22)
+
+
+### Bug Fixes
+
+* address consolidated review feedback ([cea33a1](https://github.com/zeldrisho/pi-zeldrova/commit/cea33a1f30783bd19231fe9dc69686c58f313785))
+
 ## [0.2.1](https://github.com/zeldrisho/pi-zeldrova/compare/pi-nested-agent-md-v0.2.0...pi-nested-agent-md-v0.2.1) (2026-07-20)
 
 
