@@ -15,8 +15,8 @@ concurrency:
 
 jobs:
   review:
-    # Repository secrets are unavailable to fork and Dependabot pull requests.
-    if: github.event.pull_request.head.repo.fork == false && github.actor != 'dependabot[bot]'
+    # Repository secrets are unavailable to forks; bot-authored pull requests do not need reviews.
+    if: github.event.pull_request.head.repo.fork == false && github.actor != 'dependabot[bot]' && github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
