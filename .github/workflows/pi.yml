@@ -45,8 +45,8 @@ jobs:
             ./packages/pi-web-fetch
           prompt: |
             Review the current pull request using the GitHub PR diff, existing PR comments,
-            checked-out files, AGENTS.md, docs/security.md, and docs/development.md. Read the
-            README and tests for each affected package.
+            checked-out files, docs/security.md, and docs/development.md. Read the README and
+            tests for each affected package.
 
             Report only new, verified, actionable defects introduced by this PR. Prioritize:
             - correctness, runtime failures, races, cancellation, and error handling;
