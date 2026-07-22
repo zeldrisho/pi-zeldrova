@@ -56,7 +56,7 @@ function escapeXmlAttribute(value: string): string {
 function originalText(content: readonly ContentBlock[]): string {
   return content
     .filter(
-      (block): block is { type: string; text: string } =>
+      (block): block is { type: "text"; text: string } =>
         block.type === "text" && typeof block.text === "string",
     )
     .map((block) => block.text)
@@ -88,27 +88,25 @@ export class ContextAccumulator {
     return this.addition;
   }
 
-  hasCapacity(root: string, path: string): boolean {
+  private capacity(root: string, path: string): { bytes: number; lines: number } {
     const reservedWrapper = formatContext(root, path, "", true);
-    const contentByteBudget = Math.min(
-      MAX_FILE_BYTES,
-      this.bytesLeft - byteLength(reservedWrapper),
-    );
-    const contentLineBudget = this.linesLeft - lineCount(reservedWrapper) + 1;
-    return contentByteBudget > 0 && contentLineBudget > 0;
+    return {
+      bytes: Math.min(MAX_FILE_BYTES, this.bytesLeft - byteLength(reservedWrapper)),
+      lines: this.linesLeft - lineCount(reservedWrapper) + 1,
+    };
+  }
+
+  hasCapacity(root: string, path: string): boolean {
+    const capacity = this.capacity(root, path);
+    return capacity.bytes > 0 && capacity.lines > 0;
   }
 
   append(root: string, path: string, content: string): boolean {
-    const reservedWrapper = formatContext(root, path, "", true);
-    const contentByteBudget = Math.min(
-      MAX_FILE_BYTES,
-      this.bytesLeft - byteLength(reservedWrapper),
-    );
-    const contentLineBudget = this.linesLeft - lineCount(reservedWrapper) + 1;
-    if (contentByteBudget <= 0 || contentLineBudget <= 0) return false;
+    const capacity = this.capacity(root, path);
+    if (capacity.bytes <= 0 || capacity.lines <= 0) return false;
 
-    const byteLimited = truncateUtf8(content, contentByteBudget);
-    const lineLimited = truncateLines(byteLimited.text, contentLineBudget);
+    const byteLimited = truncateUtf8(content, capacity.bytes);
+    const lineLimited = truncateLines(byteLimited.text, capacity.lines);
     const section = formatContext(
       root,
       path,
