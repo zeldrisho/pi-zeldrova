@@ -7,10 +7,20 @@
     "packages/pi-file-remove": {
       "initial-version": "0.1.0"
     },
-    "packages/pi-file-search": {},
-    "packages/pi-nested-agent-md": {},
-    "packages/pi-vite-plus": {},
-    "packages/pi-web-fetch": {},
-    "packages/pi-web-search": {}
+    "packages/pi-file-search": {
+      "initial-version": "0.1.0"
+    },
+    "packages/pi-nested-agent-md": {
+      "initial-version": "0.1.0"
+    },
+    "packages/pi-vite-plus": {
+      "initial-version": "0.1.0"
+    },
+    "packages/pi-web-fetch": {
+      "initial-version": "0.1.0"
+    },
+    "packages/pi-web-search": {
+      "initial-version": "0.1.0"
+    }
   }
 }
