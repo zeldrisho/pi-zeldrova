@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/zeldrisho/pi-zeldrova/compare/pi-web-search-v0.3.0...pi-web-search-v0.3.1) (2026-07-22)
+
+
+### Bug Fixes
+
+* address consolidated review feedback ([cea33a1](https://github.com/zeldrisho/pi-zeldrova/commit/cea33a1f30783bd19231fe9dc69686c58f313785))
+
 ## [0.3.0](https://github.com/zeldrisho/pi-zeldrova/compare/pi-web-search-v0.2.0...pi-web-search-v0.3.0) (2026-07-20)
 
 
