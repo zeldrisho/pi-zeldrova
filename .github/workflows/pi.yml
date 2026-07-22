@@ -25,18 +25,24 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      - uses: voidzero-dev/setup-vp@250f29ce396baf5e8f24498e17c0dfdebabc26eb # v1.15.0
+
+      - name: Install workspace dependencies
+        run: vp install --frozen-lockfile --ignore-scripts
+
       - id: pi
-        uses: zeldrisho/pi-code-assist@848f959a0f7e9733265b06c526cbff5fac8dcee8 # v1.0.0
+        uses: zeldrisho/pi-code-assist@32e52539145d08582ee7e6fb2ecb7f8595c93e57 # v2.0.0
         with:
           api-key: ${{ secrets.OPENCODE_API_KEY }}
           provider: opencode
           model: deepseek-v4-flash-free
+          pi-version: 0.80.10
           github-tools: read
           tools: all
           project-trust: true
           packages: |
-            npm:@zeldrisho/pi-web-search@0.3.0
-            npm:@zeldrisho/pi-web-fetch@0.3.0
+            ./packages/pi-web-search
+            ./packages/pi-web-fetch
           prompt: |
             Load https://raw.githubusercontent.com/anthropics/knowledge-work-plugins/refs/heads/main/engineering/skills/code-review/SKILL.md, then review this pull request.
 
