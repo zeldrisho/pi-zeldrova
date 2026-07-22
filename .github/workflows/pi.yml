@@ -44,10 +44,30 @@ jobs:
             ./packages/pi-web-search
             ./packages/pi-web-fetch
           prompt: |
-            Review this pull request using the GitHub PR diff and checked-out files.
-            Report only verified, actionable findings ordered by severity.
-            If there are no findings, say "No actionable findings."
-            Limit the response to 400 words. Omit summaries, praise, tables, and self-corrections.
+            Review the current pull request using the GitHub PR diff, existing PR comments,
+            checked-out files, AGENTS.md, docs/security.md, and docs/development.md. Read the
+            README and tests for each affected package.
+
+            Report only new, verified, actionable defects introduced by this PR. Prioritize:
+            - correctness, runtime failures, races, cancellation, and error handling;
+            - security boundaries involving paths, symlinks, SSRF, redirects, credentials,
+              untrusted content, shell input, and workflow permissions;
+            - backward compatibility of exports, tool schemas, and package behavior;
+            - missing tests for changed behavior and failure paths;
+            - unbounded bytes, lines, memory, loops, caches, or temporary resources; and
+            - package independence, dependency placement, and published-file allowlists.
+
+            Apply package-specific invariants from docs/security.md. Do not report style
+            preferences, pre-existing issues, intentional documented behavior, or findings
+            already resolved on the current PR head. Verify every claim against source or
+            tests before reporting it.
+
+            For each finding provide its severity (blocker, high, or medium), exact file and
+            line, concrete failure scenario and impact, and the smallest practical fix.
+
+            Return at most 5 findings and 400 words. Omit summaries, praise, tables, verdicts,
+            low-value suggestions, and self-corrections. If no qualifying findings exist,
+            respond exactly: "No actionable findings."
 
       - name: Post review
         env:
