@@ -35,7 +35,8 @@
 ## Git Workflow
 
 - Before starting work, fetch and prune remote refs, reconcile local and remote state, and remove completed local branches.
-- Rebase work branches onto their target branch; do not merge the target branch into them.
+- Keep only `main` and one active work branch locally; do not create a second work branch.
+- Rebase the active work branch onto its target branch; do not merge the target branch into it.
 - Never rewrite commits that are merged, tagged, released, or published.
 
 ## Pull Requests and Releases
