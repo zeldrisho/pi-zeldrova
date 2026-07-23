@@ -26,6 +26,8 @@ jobs:
           persist-credentials: false
 
       - uses: voidzero-dev/setup-vp@250f29ce396baf5e8f24498e17c0dfdebabc26eb # v1.15.0
+        with:
+          run-install: false
 
       - name: Install workspace dependencies
         run: vp install --frozen-lockfile --ignore-scripts
