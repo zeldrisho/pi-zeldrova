@@ -1,5 +1,5 @@
 {
-  "name": "@zeldrisho/pi-zeldrova",
+  "name": "@zeldrisho/pi-packages",
   "private": true,
   "description": "Monorepo for independently published Pi extensions.",
   "license": "MIT",

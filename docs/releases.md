@@ -17,7 +17,7 @@ Release automation requires:
 
 - the repository `GITHUB_TOKEN`, so release pull requests and commits are owned by `github-actions[bot]` instead of a maintainer account;
 - a protected `publish` GitHub environment; and
-- one npm trusted publisher per package for `zeldrisho/pi-zeldrova`, workflow `release.yml`, environment `publish`, with the `npm publish` action allowed.
+- one npm trusted publisher per package for `zeldrisho/pi-packages`, workflow `release.yml`, environment `publish`, with the `npm publish` action allowed.
 
 GitHub does not start new workflow runs for pull requests created with `GITHUB_TOKEN`. The release workflow therefore validates each pushed commit before Release Please runs. It also serializes release runs, grants `id-token: write` only to the publish job, and publishes only package paths reported as released by Release Please. Keep workflow actions pinned to full commit SHAs.
 
@@ -28,7 +28,7 @@ npm trusted publishing is configured from an existing package's settings, so it 
 1. Add the package to `release-please-config.json` with `"initial-version": "0.1.0"`, set its tracked `package.json` version to `0.1.0`, leave its path absent from `.release-please-manifest.json`, and initialize its allowlisted `CHANGELOG.md` as an empty file. Without an explicit initial version, Release Please proposes `1.0.0`; pre-populating the changelog with its heading also causes a duplicate heading in the generated file.
 2. Complete the repository checks and inspect the package tarball.
 3. From an isolated copy of that inspected tarball, change only the temporary package version to `0.0.0` and publish it manually with `vp pm publish -- --access public --tag bootstrap`. Do not commit the bootstrap version or add it to the release manifest.
-4. In the new package's npm settings, configure the trusted publisher for repository `zeldrisho/pi-zeldrova`, workflow `release.yml`, environment `publish`, and the `npm publish` action.
+4. In the new package's npm settings, configure the trusted publisher for repository `zeldrisho/pi-packages`, workflow `release.yml`, environment `publish`, and the `npm publish` action.
 5. Verify `0.0.0` and the `bootstrap` dist-tag on npm. The normal release procedure can then publish `0.1.0` through OIDC; npm will move `latest` to that release.
 
 Publishing the bootstrap version is irreversible. If any name, version, access level, tarball content, or publisher setting is unexpected, stop before merging the Release Please pull request.
