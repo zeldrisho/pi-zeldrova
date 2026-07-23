@@ -11,15 +11,15 @@
     "pi-package",
     "trash"
   ],
-  "homepage": "https://github.com/zeldrisho/pi-zeldrova/tree/main/packages/pi-file-remove#readme",
+  "homepage": "https://github.com/zeldrisho/pi-packages/tree/main/packages/pi-file-remove#readme",
   "bugs": {
-    "url": "https://github.com/zeldrisho/pi-zeldrova/issues"
+    "url": "https://github.com/zeldrisho/pi-packages/issues"
   },
   "license": "MIT",
   "author": "Zeldris",
   "repository": {
     "type": "git",
-    "url": "https://github.com/zeldrisho/pi-zeldrova.git",
+    "url": "https://github.com/zeldrisho/pi-packages.git",
     "directory": "packages/pi-file-remove"
   },
   "files": [

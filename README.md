@@ -1,4 +1,4 @@
-# Pi Zeldrova
+# Pi Packages
 
 Monorepo for my personal Pi extensions.
 
